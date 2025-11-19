@@ -32,7 +32,29 @@ bot.once('spawn', () => {
 })
 
 async function compressIronCycle() {
+  console.log("Sleeping");
+  const beds = bot.findBlocks({
+    matching: bot.registry.blocksByName["white_bed"].id,
+    maxDistance: 128,
+  });
+  beds.forEach(async (bed) => {
+    try {
+
+      // wait 1 second
+      const bedBlock = bot.blockAt(bed);
+      if (bedBlock) {
+        await bot.sleep(bedBlock);
+      } else {
+        console.log("No bed block found");
+      }
+    } catch (e) {
+      console.log("Failed to sleep in bed " + e);
+    }
+  });
+
+  console.log("Sleeping done");
   try {
+    
     console.log('Starting iron compression cycle...')
 
     const mcData = require('minecraft-data')(bot.version)

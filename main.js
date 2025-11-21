@@ -75,6 +75,19 @@ async function compressIronCycle() {
       return
     }
 
+    // Find cactus for poppy disposal
+    const cactusBlockId = mcData.blocksByName.cactus.id
+    const cactus = bot.findBlock({
+      matching: cactusBlockId,
+      maxDistance: 4
+    })
+
+    if (!cactus) {
+      console.log('No cactus found within throwing range - poppy cleaning disabled')
+    } else {
+      console.log('Cactus found for poppy disposal')
+    }
+
     // Find all chests within interaction range (4 blocks max)
     const chests = bot.findBlocks({
       matching: [chestBlockId, trappedChestBlockId],

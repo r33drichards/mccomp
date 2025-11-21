@@ -170,14 +170,33 @@ async function compressIronCycle() {
           for (const item of poppies) {
             await chestWindow.withdraw(item.type, null, item.count)
           }
+
+          // Immediately toss poppies after withdrawing (before checking for iron)
+          const heldPoppies = bot.inventory.items().filter(item => item.type === poppyId)
+          if (heldPoppies.length > 0) {
+            console.log('Tossing poppies on cactus...')
+            for (const item of heldPoppies) {
+              try {
+                await bot.tossStack(item)
+                console.log(`Tossed ${item.count} poppy/poppies`)
+              } catch (err) {
+                console.log(`Failed to toss poppies: ${err.message}`)
+                // Try to return poppies to chest
+                try {
+                  await returnItemsToChest(chestBlock, poppyId)
+                  console.log('Returned poppies to chest')
+                } catch (returnErr) {
+                  console.log(`Could not return poppies: ${returnErr.message}`)
+                }
+              }
+            }
+          }
         } else if (poppyCount > 0 && !cactus) {
           console.log(`Found ${poppyCount} poppy/poppies but no cactus available - skipping`)
         }
 
         const ironIngots = allItems.filter(item => item.type === ironIngotId)
         const ingotsInChest = ironIngots.reduce((sum, item) => sum + item.count, 0)
-
-        // Process poppies first (already in place from Task 3)
 
         // Then check if there are iron ingots to process
         if (ingotsInChest === 0 && poppyCount === 0) {
@@ -216,27 +235,6 @@ async function compressIronCycle() {
 
         chestWindow.close()
         console.log(`Withdrew ${withdrawn} iron ingots`)
-
-        // Toss poppies on cactus if we withdrew any
-        const heldPoppies = bot.inventory.items().filter(item => item.type === poppyId)
-        if (heldPoppies.length > 0 && cactus) {
-          console.log('Tossing poppies on cactus...')
-          for (const item of heldPoppies) {
-            try {
-              await bot.tossStack(item)
-              console.log(`Tossed ${item.count} poppy/poppies`)
-            } catch (err) {
-              console.log(`Failed to toss poppies: ${err.message}`)
-              // Try to return poppies to chest
-              try {
-                await returnItemsToChest(chestBlock, poppyId)
-                console.log('Returned poppies to chest')
-              } catch (returnErr) {
-                console.log(`Could not return poppies: ${returnErr.message}`)
-              }
-            }
-          }
-        }
 
         // Craft iron blocks
         const ironBlockRecipe = bot.recipesFor(ironBlockId, null, 1, craftingTable)[0]

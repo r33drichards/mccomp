@@ -89,10 +89,10 @@ async function compressIronCycle() {
       console.log('Cactus found for poppy disposal')
     }
 
-    // Find all chests within interaction range (4 blocks max)
+    // Find all chests within interaction range (3 blocks for reliable opening)
     const chests = bot.findBlocks({
       matching: [chestBlockId, trappedChestBlockId],
-      maxDistance: 4,
+      maxDistance: 3,
       count: 20
     })
 
@@ -137,6 +137,7 @@ async function compressIronCycle() {
 
       try {
         const chestWindow = await bot.openChest(chestBlock)
+        await new Promise(resolve => setTimeout(resolve, 200))
 
         // Get items FROM THE CHEST
         const allItems = chestWindow.containerItems()
@@ -225,7 +226,11 @@ async function compressIronCycle() {
 
         if (!ironBlockRecipe) {
           console.log('Could not find iron block recipe')
-          await returnItemsToChest(chestBlock, ironIngotId)
+          try {
+            await returnItemsToChest(chestBlock, ironIngotId)
+          } catch (returnErr) {
+            console.log(`Could not return iron ingots: ${returnErr.message}`)
+          }
           continue
         }
 
@@ -265,12 +270,14 @@ async function compressIronCycle() {
       } catch (err) {
         console.log(`Error processing chest at ${chestPos}: ${err.message}`)
 
-        // Try to deposit any items we're holding back to this chest
-        try {
-          await returnItemsToChest(chestBlock, ironIngotId)
-          await returnItemsToChest(chestBlock, ironBlockId)
-        } catch (depositErr) {
-          console.log(`Could not return items: ${depositErr.message}`)
+        // Only try to return items if error wasn't a timeout (chest might be unreachable)
+        if (!err.message.includes('timeout') && !err.message.includes('windowOpen')) {
+          try {
+            await returnItemsToChest(chestBlock, ironIngotId)
+            await returnItemsToChest(chestBlock, ironBlockId)
+          } catch (depositErr) {
+            console.log(`Could not return items: ${depositErr.message}`)
+          }
         }
         continue
       }
@@ -284,16 +291,18 @@ async function compressIronCycle() {
 }
 
 async function returnItemsToChest(chest, itemId) {
-  try {
-    const chestWindow = await bot.openChest(chest)
-
-    const items = bot.inventory.items().filter(item => item.type === itemId)
-    for (const item of items) {
-      await chestWindow.deposit(item.type, null, item.count)
-    }
-
-    chestWindow.close()
-  } catch (err) {
-    console.log('Error returning items to chest:', err.message)
+  // Check if we have any items to return first
+  const items = bot.inventory.items().filter(item => item.type === itemId)
+  if (items.length === 0) {
+    return // No items to return, skip chest opening
   }
+
+  const chestWindow = await bot.openChest(chest)
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  for (const item of items) {
+    await chestWindow.deposit(item.type, null, item.count)
+  }
+
+  chestWindow.close()
 }

@@ -145,6 +145,24 @@ async function compressIronCycle() {
       }
     }
 
+    // Clear any poppies from inventory before starting
+    const heldPoppies = bot.inventory.items().filter(item => item.type === poppyId)
+    if (heldPoppies.length > 0) {
+      if (cactus) {
+        console.log('Clearing poppies from inventory before starting cycle...')
+        for (const item of heldPoppies) {
+          try {
+            await bot.tossStack(item)
+            console.log(`Tossed ${item.count} poppy/poppies`)
+          } catch (err) {
+            console.log(`Failed to toss poppies: ${err.message}`)
+          }
+        }
+      } else {
+        console.log('Warning: Inventory contains poppies but no cactus available for disposal')
+      }
+    }
+
     // Process each chest individually - withdraw, craft, deposit back
     for (const chestPos of chests) {
       const chestBlock = bot.blockAt(chestPos)

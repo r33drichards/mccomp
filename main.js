@@ -7,29 +7,46 @@
 const mineflayer = require('mineflayer')
 const autoEat = require('mineflayer-auto-eat')
 
-
-const bot = mineflayer.createBot({
+const botOptions = {
   host: 'centerbeam.proxy.rlwy.net',
   port: 40387,
   username: 'crafter',
   password: 'qwerty123'
-})
+}
 
+let bot
+let compressionInterval
 
-bot.once('spawn', () => {
+function createBot() {
+  bot = mineflayer.createBot(botOptions)
 
-  bot.loadPlugin(autoEat.loader)
-  bot.autoEat.enableAuto()
+  bot.on('spawn', () => {
+    bot.loadPlugin(autoEat.loader)
+    bot.autoEat.enableAuto()
 
-  // Wait for chunks to load before starting
-  setTimeout(() => {
-    console.log('Bot ready, starting iron compression cycle...')
-    compressIronCycle()
-    setInterval(() => {
+    // Wait for chunks to load before starting
+    setTimeout(() => {
+      console.log('Bot ready, starting iron compression cycle...')
       compressIronCycle()
-    }, 30000) // Check every 30 seconds
-  }, 3000) // Wait 3 seconds for chunks to load
-})
+      compressionInterval = setInterval(() => {
+        compressIronCycle()
+      }, 30000) // Check every 30 seconds
+    }, 3000) // Wait 3 seconds for chunks to load
+  })
+
+  bot.on('end', (reason) => {
+    console.log(`Disconnected: ${reason}. Reconnecting in 5 seconds...`)
+    if (compressionInterval) {
+      clearInterval(compressionInterval)
+      compressionInterval = null
+    }
+    setTimeout(createBot, 5000)
+  })
+
+  bot.on('error', (err) => {
+    console.log(`Error: ${err.message}`)
+  })
+}
 
 async function compressIronCycle() {
   console.log("Sleeping");
@@ -306,3 +323,5 @@ async function returnItemsToChest(chest, itemId) {
 
   chestWindow.close()
 }
+
+createBot()

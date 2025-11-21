@@ -145,8 +145,15 @@ async function compressIronCycle() {
         const poppies = allItems.filter(item => item.type === poppyId)
         const poppyCount = poppies.reduce((sum, item) => sum + item.count, 0)
 
-        if (poppyCount > 0) {
-          console.log(`Found ${poppyCount} poppy/poppies in chest`)
+        if (poppyCount > 0 && cactus) {
+          console.log(`Found ${poppyCount} poppy/poppies in chest - withdrawing`)
+
+          // Withdraw all poppies
+          for (const item of poppies) {
+            await chestWindow.withdraw(item.type, null, item.count)
+          }
+        } else if (poppyCount > 0 && !cactus) {
+          console.log(`Found ${poppyCount} poppy/poppies but no cactus available - skipping`)
         }
 
         const ironIngots = allItems.filter(item => item.type === ironIngotId)

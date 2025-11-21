@@ -157,14 +157,23 @@ async function compressIronCycle() {
         }
 
         const ironIngots = allItems.filter(item => item.type === ironIngotId)
+        const ingotsInChest = ironIngots.reduce((sum, item) => sum + item.count, 0)
 
-        if (ironIngots.length === 0) {
-          console.log('No iron ingots in this chest')
+        // Process poppies first (already in place from Task 3)
+
+        // Then check if there are iron ingots to process
+        if (ingotsInChest === 0 && poppyCount === 0) {
+          console.log('Chest is empty - skipping')
           chestWindow.close()
           continue
         }
 
-        const ingotsInChest = ironIngots.reduce((sum, item) => sum + item.count, 0)
+        if (ingotsInChest === 0) {
+          console.log('No iron ingots in this chest (poppies already handled)')
+          chestWindow.close()
+          continue
+        }
+
         console.log(`Found ${ingotsInChest} iron ingots`)
 
         // Calculate available inventory space (each slot holds 64 ingots)

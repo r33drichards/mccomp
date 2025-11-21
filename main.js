@@ -62,6 +62,7 @@ async function compressIronCycle() {
     const trappedChestBlockId = mcData.blocksByName.trapped_chest.id
     const ironIngotId = mcData.itemsByName.iron_ingot.id
     const ironBlockId = mcData.itemsByName.iron_block.id
+    const poppyId = mcData.itemsByName.poppy.id
 
     // Find crafting table first - we need it to proceed
     const craftingTableBlockId = mcData.blocksByName.crafting_table.id
@@ -139,6 +140,15 @@ async function compressIronCycle() {
 
         // Get items FROM THE CHEST
         const allItems = chestWindow.containerItems()
+
+        // Check for poppies to clean
+        const poppies = allItems.filter(item => item.type === poppyId)
+        const poppyCount = poppies.reduce((sum, item) => sum + item.count, 0)
+
+        if (poppyCount > 0) {
+          console.log(`Found ${poppyCount} poppy/poppies in chest`)
+        }
+
         const ironIngots = allItems.filter(item => item.type === ironIngotId)
 
         if (ironIngots.length === 0) {
